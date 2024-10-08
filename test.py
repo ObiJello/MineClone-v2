@@ -11,6 +11,7 @@ import signal
 from flask import Flask, request, jsonify
 import threading
 import os
+import shutil
 
 # Variable to store the ngrok tunnel object
 ngrok_tunnel = None
@@ -90,6 +91,13 @@ def run_server():
 
     # Configure Ngrok authentication
     conf.get_default().auth_token = "2n6dGlsHf3g0Z5TIssTAmGpbwj5_6NcTVBnzq5LX7UpxZsJEL"  # Replace with your Ngrok auth token
+
+    # Find the ngrok executable
+    ngrok_path = shutil.which("ngrok")
+    if not ngrok_path:
+        print("Ngrok executable not found. Please install Ngrok and add it to your PATH.")
+        sys.exit(1)
+    conf.get_default().ngrok_path = ngrok_path
 
     # Expose port 9999 using Ngrok
     ngrok_tunnel = ngrok.connect(9999, "tcp")
