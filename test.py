@@ -112,10 +112,15 @@ def run_server():
         sys.exit(1)
     conf.get_default().ngrok_path = ngrok_path
 
-    # Expose port 9999 using Ngrok
-    ngrok_tunnel = ngrok.connect(9999, "tcp")
-    public_url = ngrok_tunnel.public_url
-    print(f"Ngrok tunnel created: {public_url}")
+    # Use the found ngrok executable to start the tunnel
+    try:
+        # Expose port 9999 using Ngrok
+        ngrok_tunnel = ngrok.connect(9999, "tcp")
+        public_url = ngrok_tunnel.public_url
+        print(f"Ngrok tunnel created: {public_url}")
+    except Exception as e:
+        print(f"Failed to start Ngrok: {e}")
+        sys.exit(1)
 
     # Send the public IP and port to the client machine
     client_ip = "192.168.1.180"  # Replace with the actual IP address of the client machine
