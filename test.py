@@ -92,10 +92,23 @@ def run_server():
     # Configure Ngrok authentication
     conf.get_default().auth_token = "2n6dGlsHf3g0Z5TIssTAmGpbwj5_6NcTVBnzq5LX7UpxZsJEL"  # Replace with your Ngrok auth token
 
-    # Find the ngrok executable
-    ngrok_path = shutil.which("ngrok")
+    # List of possible paths to find ngrok
+    ngrok_paths = [
+        "/Library/Frameworks/Python.framework/Versions/3.12/bin/ngrok",
+        "/usr/local/bin/ngrok",
+        "/usr/bin/ngrok",
+        "/opt/homebrew/bin/ngrok"  # Add more paths if necessary
+    ]
+
+    # Find the first valid ngrok path
+    ngrok_path = None
+    for path in ngrok_paths:
+        if os.path.exists(path):
+            ngrok_path = path
+            break
+
     if not ngrok_path:
-        print("Ngrok executable not found. Please install Ngrok and add it to your PATH.")
+        print("Ngrok executable not found in any of the specified paths. Please check the paths and try again.")
         sys.exit(1)
     conf.get_default().ngrok_path = ngrok_path
 
