@@ -123,7 +123,7 @@ def run_server():
         sys.exit(1)
 
     # Send the public IP and port to the client machine
-    client_ip = "192.168.1.180"  # Replace with the actual IP address of the client machine
+    client_ip = "173.70.81.112"  # Replace with the actual IP address of the client machine
     client_port = 5321  # The port where the client will listen for the IP
     send_public_ip_to_client(public_url, client_ip, client_port)
 
