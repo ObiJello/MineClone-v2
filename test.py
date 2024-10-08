@@ -47,8 +47,13 @@ def screen_streamer(client_socket):
                 img_bytes = img_byte_array.getvalue()
                 client_socket.sendall(struct.pack("!L", len(img_bytes)) + img_bytes)  # Use network byte order (!)
                 time.sleep(1 / 24)  # 24 FPS
+            except (BrokenPipeError, ConnectionResetError) as e:
+                print(f"Connection lost: {e}", file=sys.stderr)
+                client_connected.clear()  # Stop the streaming
+                break
             except Exception as e:
                 print(f"Error in screen streaming: {e}", file=sys.stderr)
+                client_connected.clear()
                 break
 
 # Function to shut down server
@@ -94,6 +99,7 @@ def run_server():
 
     # List of possible paths to find ngrok
     ngrok_paths = [
+        shutil.which("ngrok"),  # Check if ngrok is in system PATH
         "/Library/Frameworks/Python.framework/Versions/3.12/bin/ngrok",
         "/usr/local/bin/ngrok",
         "/usr/bin/ngrok",
@@ -103,7 +109,7 @@ def run_server():
     # Find the first valid ngrok path
     ngrok_path = None
     for path in ngrok_paths:
-        if os.path.exists(path):
+        if path and os.path.exists(path):
             ngrok_path = path
             break
 
@@ -133,18 +139,23 @@ def run_server():
     flask_thread.start()
 
     # Now start the socket server
-    stream_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    stream_socket.bind(('0.0.0.0', 9999))  # Listen on port 9999
-    stream_socket.listen(5)
-
-    print("Server is dormant, waiting for client connection...")
-
     while True:
-        client_socket, addr = stream_socket.accept()
-        print(f"Client connected from {addr}. Starting screen stream...")
-        client_connected.set()  # Indicate that a client is connected
-        client_handler_thread = threading.Thread(target=handle_client, args=(client_socket,))
-        client_handler_thread.start()
+        try:
+            stream_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            stream_socket.bind(('0.0.0.0', 9999))  # Listen on port 9999
+            stream_socket.listen(5)
+
+            print("Server is dormant, waiting for client connection...")
+
+            while True:
+                client_socket, addr = stream_socket.accept()
+                print(f"Client connected from {addr}. Starting screen stream...")
+                client_connected.set()  # Indicate that a client is connected
+                client_handler_thread = threading.Thread(target=handle_client, args=(client_socket,))
+                client_handler_thread.start()
+        except Exception as e:
+            print(f"Error in main server loop: {e}. Restarting server...")
+            time.sleep(5)  # Small delay before restarting the server loop
 
 # Handle client connection
 def handle_client(client_socket):
